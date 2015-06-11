@@ -7,16 +7,33 @@ Run with
 """
 
 import sys
+import json
+import yaml
 import logging
+import requests
 
 
 logger = logging.getLogger(__name__)
 
 
 class Number26(object):
+
+    def __init__(self, config):
+        with open('n26_config.yml', 'r') as yfile:
+            config = yaml.load(yfile)
+        self.credentials = {
+            'username': config['email'],
+            'password': config['password'],
+            'grant_type': 'password'
+        }
+        del config
+
     def read(self):
-        data = []
-        return data
+        return []
+
+
+    def write(self, filename, data):
+        pass
 
 
 if __name__ == '__main__':
@@ -30,4 +47,4 @@ if __name__ == '__main__':
     ynab_data = []
     for row in input_data:
         ynab_data.append(parser.convert_line(row))
-    parser.write_ynab(ynab_file, ynab_data)
+    parser.write(ynab_file, ynab_data)
