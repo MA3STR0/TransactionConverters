@@ -47,7 +47,18 @@ class Number26(object):
         del self.credentials
         if page.status_code != 200:
             raise Exception("Wrong email/password")
-        return []
+
+        resp = json.loads(page.text)
+        session.headers.update({
+            'Authorization': 'bearer %s' % resp['access_token']
+        })
+        del self.session.headers['content-type']
+        session.get('https://api.tech26.de/api/smrt/transactions',
+                    params={'limit': 50})
+        if page.status_code != 200:
+            raise Exception("Could not load transactions: %s" % page.text)
+        resp = json.loads(page.text)
+        return resp
 
 
     def write(self, filename, data):
