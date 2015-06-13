@@ -29,6 +29,24 @@ class Number26(object):
         del config
 
     def read(self):
+        session = requests.Session()
+        session.headers.update({
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'accept-language': 'en-US,en;q=0.8',
+            'accept-encoding': 'gzip, deflate',
+            'content-type': 'application/x-www-form-urlencoded',
+            'Origin': 'https://my.number26.de',
+            'Referer': 'https://my.number26.de/',
+            'Authorization': 'Basic bXktdHJ1c3RlZC13ZHBDbGllbnQ6c2VjcmV0',
+            'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) '
+                           'AppleWebKit/537.36 (KHTML, like Gecko) '
+                           'Chrome/47.0.2526.111 Safari/537.36')
+        })
+        page = session.post("https://api.tech26.de/oauth/token",
+                            data=self.credentials)
+        del self.credentials
+        if page.status_code != 200:
+            raise Exception("Wrong email/password")
         return []
 
 
