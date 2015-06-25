@@ -8,6 +8,7 @@ Run with
 
 import sys
 import json
+import csv
 import yaml
 import logging
 import requests
@@ -86,29 +87,35 @@ class Number26(object):
         date = time.strftime('%m/%d/%y', time.gmtime(_timestamp))
         payee = self.find_payee(_raw_payee, _comment)
         amount = Decimal(_raw_amount)
-        category = row.get('category')
         memo = "%s: %s" % (payee, _comment) if payee else _comment
+        category = ""   # let client software determine category based on payee
         ynab = {
             'Date': date,
             'Payee': payee,
-            'Category': category,
             'Memo': memo,
             'Outflow': -amount if amount < 0 else '',
-            'Inflow': amount if amount > 0 else ''
+            'Inflow': amount if amount > 0 else '',
+            'Category': category,
         }
         return ynab
 
     def write(self, filename, data):
-        pass
+        with open(filename, 'w') as csvfile:
+            fieldnames = ['Date', 'Payee', 'Category', 'Memo', 'Outflow',
+                          'Inflow']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
 
 
 if __name__ == '__main__':
-    if not len(sys.argv) == 2:
+    if len(sys.argv) > 2:
         logger.error("Wrong parameters provided. Run with:"
-                     "./n26 ynab-out-file.csv")
+                     "./n26")
         sys.exit(1)
-    ynab_file = sys.argv[1]
-    parser = Number26()
+        ynab_file = "ynab_data_n26.csv"
+    parser = Number26(config="n26_config.yml")
     input_data = parser.read()
     ynab_data = []
     for row in input_data:
