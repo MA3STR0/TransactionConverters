@@ -29,6 +29,22 @@ class Number26(object):
             'grant_type': 'password'
         }
         del config
+        with open('public_payees.yml', 'r') as yfile:
+            self.payees = yaml.load(yfile)
+        with open('private_payees.yml', 'r') as yfile:
+            self.payees.update(yaml.load(yfile))
+
+    def find_payee(self, *sources):
+        # first check startswith
+        for match, payee in self.payees.items():
+            if [source for source in sources
+                    if source.lower().startswith(match.lower())]:
+                return payee
+        # then check contains
+        for match, payee in self.payees.items():
+            if [source for source in sources
+                    if match.lower() in source.lower()]:
+                return payee
 
     def read(self):
         session = requests.Session()
@@ -62,12 +78,13 @@ class Number26(object):
         resp = json.loads(page.text)
         return resp
 
-    def convert_row(row):
+    def convert_row(self, row):
         _timestamp = row['visibleTS'] / 1000
-        date = time.strftime('%m/%d/%y', time.gmtime(_timestamp))
-        payee = row['merchantName']
+        _raw_payee = row['merchantName']
         _comment = row.get('referenceText', '')
         _raw_amount = row['amount']
+        date = time.strftime('%m/%d/%y', time.gmtime(_timestamp))
+        payee = self.find_payee(_raw_payee, _comment)
         amount = Decimal(_raw_amount)
         category = row.get('category')
         memo = "%s: %s" % (payee, _comment) if payee else _comment
