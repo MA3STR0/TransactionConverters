@@ -11,6 +11,8 @@ import json
 import yaml
 import logging
 import requests
+import time
+from decimal import Decimal
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +62,24 @@ class Number26(object):
         resp = json.loads(page.text)
         return resp
 
+    def convert_row(row):
+        _timestamp = row['visibleTS'] / 1000
+        date = time.strftime('%m/%d/%y', time.gmtime(_timestamp))
+        payee = row['merchantName']
+        _comment = row.get('referenceText', '')
+        _raw_amount = row['amount']
+        amount = Decimal(_raw_amount)
+        category = row.get('category')
+        memo = "%s: %s" % (payee, _comment) if payee else _comment
+        ynab = {
+            'Date': date,
+            'Payee': payee,
+            'Category': category,
+            'Memo': memo,
+            'Outflow': -amount if amount < 0 else '',
+            'Inflow': amount if amount > 0 else ''
+        }
+        return ynab
 
     def write(self, filename, data):
         pass
@@ -75,5 +95,5 @@ if __name__ == '__main__':
     input_data = parser.read()
     ynab_data = []
     for row in input_data:
-        ynab_data.append(parser.convert_line(row))
+        ynab_data.append(parser.convert_row(row))
     parser.write(ynab_file, ynab_data)
