@@ -16,6 +16,7 @@ import time
 from decimal import Decimal
 
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -73,8 +74,8 @@ class Number26(object):
             'Authorization': 'bearer %s' % resp['access_token']
         })
         del session.headers['content-type']
-        session.get('https://api.tech26.de/api/smrt/transactions',
-                    params={'limit': 50})
+        page = session.get('https://api.tech26.de/api/smrt/transactions',
+                           params={'limit': 50})
         if page.status_code != 200:
             raise Exception("Could not load transactions: %s" % page.text)
         logger.info('transactions loaded')
@@ -83,13 +84,15 @@ class Number26(object):
 
     def convert_row(self, row):
         _timestamp = row['visibleTS'] / 1000
-        _raw_payee = row['merchantName']
+        _raw_payee = row.get('merchantName') or row.get('partnerName', '')
         _comment = row.get('referenceText', '')
         _raw_amount = row['amount']
+        _category = row.get('category', '').replace('micro-', '')
+        _city = row.get('merchantCity', '')
         date = time.strftime('%m/%d/%y', time.gmtime(_timestamp))
-        payee = self.find_payee(_raw_payee, _comment)
-        amount = Decimal(_raw_amount)
-        memo = "%s: %s" % (payee, _comment) if payee else _comment
+        payee = self.find_payee(_raw_payee, _comment, _category)
+        amount = Decimal(str(_raw_amount))
+        memo = "%s %s %s" % (_raw_payee, _comment, _city)
         category = ""   # let client software determine category based on payee
         ynab = {
             'Date': date,
@@ -116,7 +119,7 @@ if __name__ == '__main__':
         logger.error("Wrong parameters provided. Run with:"
                      "./n26")
         sys.exit(1)
-        ynab_file = "ynab_data_n26.csv"
+    ynab_file = "ynab_data_n26.csv"
     parser = Number26(config="n26_config.yml")
     input_data = parser.read()
     ynab_data = []
