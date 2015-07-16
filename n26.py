@@ -20,9 +20,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class Number26(object):
-
+class Converter(object):
+    """
+    Base class for bank transactions processing
+    """
     def __init__(self, config):
+        with open('public_payees.yml', 'r') as yfile:
+            self.payees = yaml.load(yfile)
+        with open('private_payees.yml', 'r') as yfile:
+            self.payees.update(yaml.load(yfile))
+
+
+class Number26(Converter):
+    """
+    Implementation for Number25 bank
+    """
+    def __init__(self, *args, **kwargs):
+        super(Number26, self).__init__(*args, **kwargs)
         with open('n26_config.yml', 'r') as yfile:
             config = yaml.load(yfile)
         self.credentials = {
@@ -31,10 +45,6 @@ class Number26(object):
             'grant_type': 'password'
         }
         del config
-        with open('public_payees.yml', 'r') as yfile:
-            self.payees = yaml.load(yfile)
-        with open('private_payees.yml', 'r') as yfile:
-            self.payees.update(yaml.load(yfile))
 
     def find_payee(self, *sources):
         # first check startswith
