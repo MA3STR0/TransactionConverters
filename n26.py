@@ -24,11 +24,35 @@ class Converter(object):
     """
     Base class for bank transactions processing
     """
-    def __init__(self, config):
+    def __init__(self):
         with open('public_payees.yml', 'r') as yfile:
             self.payees = yaml.load(yfile)
         with open('private_payees.yml', 'r') as yfile:
             self.payees.update(yaml.load(yfile))
+
+    def find_payee(self, *sources):
+        """exctract matching payee name from lise of sources"""
+        for match, payee in self.payees.items():
+            # first check startswith
+            if [source for source in sources
+                    if source.lower().startswith(match.lower())]:
+                return payee
+        for match, payee in self.payees.items():
+            # then check contains
+            if [source for source in sources
+                    if match.lower() in source.lower()]:
+                return payee
+
+    def export_file(self, filename, data):
+        with open(filename, 'w') as csvfile:
+            fieldnames = ['Date', 'Payee', 'Category', 'Memo', 'Outflow',
+                          'Inflow']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
+
+
 
 
 class Number26(Converter):
@@ -46,19 +70,7 @@ class Number26(Converter):
         }
         del config
 
-    def find_payee(self, *sources):
-        # first check startswith
-        for match, payee in self.payees.items():
-            if [source for source in sources
-                    if source.lower().startswith(match.lower())]:
-                return payee
-        # then check contains
-        for match, payee in self.payees.items():
-            if [source for source in sources
-                    if match.lower() in source.lower()]:
-                return payee
-
-    def read(self):
+    def load_transactions(self):
         session = requests.Session()
         session.headers.update({
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -114,25 +126,15 @@ class Number26(Converter):
         }
         return ynab
 
-    def write(self, filename, data):
-        with open(filename, 'w') as csvfile:
-            fieldnames = ['Date', 'Payee', 'Category', 'Memo', 'Outflow',
-                          'Inflow']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in data:
-                writer.writerow(row)
-
-
 if __name__ == '__main__':
     if len(sys.argv) > 2:
         logger.error("Wrong parameters provided. Run with:"
                      "./n26")
         sys.exit(1)
-    ynab_file = "ynab_data_n26.csv"
-    parser = Number26(config="n26_config.yml")
-    input_data = parser.read()
+    ynab_file = "ynab_import_n26.csv"
+    converter = Number26()
+    input_data = converter.load_transactions()
     ynab_data = []
     for row in input_data:
-        ynab_data.append(parser.convert_row(row))
-    parser.write(ynab_file, ynab_data)
+        ynab_data.append(converter.convert_row(row))
+    converter.export_file(ynab_file, ynab_data)
