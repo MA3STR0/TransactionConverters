@@ -35,6 +35,25 @@ class Sparkasse(Converter):
                 data.append(row)
         return data
 
+    def convert_row(self, line):
+        # Credit Card
+        comment = line['Transaktionsbeschreibung']
+        amount = line['Buchungsbetrag']
+        date = line['Belegdatum']
+        payee = self.find_payee(comment)
+        category = ""
+        memo = comment
+        ynab = {
+            'Date': date,
+            'Payee': payee,
+            'Category': category,
+            'Memo': memo,
+            'Outflow': -amount if amount < 0 else '',
+            'Inflow': amount if amount > 0 else ''
+        }
+        return ynab
+
+
 if __name__ == '__main__':
     ynab_file = "ynab_data_sparkasse.csv"
     spk_file = sys.argv[1]
