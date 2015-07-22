@@ -27,6 +27,14 @@ class Sparkasse(Converter):
     def __init__(self, *args, **kwargs):
         super(Sparkasse, self).__init__(*args, **kwargs)
 
+    def load_transactions(self, filename):
+        data = []
+        with io.open(filename, 'r', encoding='cp1252') as csvfile:
+            rd = csv.DictReader(csvfile, delimiter=';')
+            for row in rd:
+                data.append(row)
+        return data
+
 if __name__ == '__main__':
     ynab_file = "ynab_data_sparkasse.csv"
     spk_file = sys.argv[1]
