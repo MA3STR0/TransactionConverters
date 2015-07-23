@@ -36,10 +36,24 @@ class Sparkasse(Converter):
         return data
 
     def convert_row(self, line):
+        """convert csv line to ynab entry"""
+
+        def process_comment(spk_comment):
+            if spk_comment.startswith('SVWZ+'):
+                spk_comment.replace('SVWZ+', '', 1)
+            return spk_comment
+
+        def process_amount(spk_amount):
+            return Decimal(spk_amount.replace(',', '.'))
+
+        def process_date(spk_date):
+            timestamp = time.strptime(spk_date, "%d.%m.%y")
+            return time.strftime('%m/%d/%y', timestamp)
+
         # Credit Card
         comment = line['Transaktionsbeschreibung']
-        amount = line['Buchungsbetrag']
-        date = line['Belegdatum']
+        amount = process_amount(line['Buchungsbetrag'])
+        date = process_date(line['Belegdatum'])
         payee = self.find_payee(comment)
         category = ""
         memo = comment
