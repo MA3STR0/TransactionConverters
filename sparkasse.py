@@ -50,13 +50,26 @@ class Sparkasse(Converter):
             timestamp = time.strptime(spk_date, "%d.%m.%y")
             return time.strftime('%m/%d/%y', timestamp)
 
-        # Credit Card
-        comment = line['Transaktionsbeschreibung']
-        amount = process_amount(line['Buchungsbetrag'])
-        date = process_date(line['Belegdatum'])
-        payee = self.find_payee(comment)
-        category = ""
-        memo = comment
+        if 'Umsatz getätigt von' in line:
+            # Credit Card
+            comment = line['Transaktionsbeschreibung']
+            amount = process_amount(line['Buchungsbetrag'])
+            date = process_date(line['Belegdatum'])
+            payee = self.find_payee(comment)
+            category = ""
+            memo = comment
+        elif 'Auftragskonto' in line:
+            # SEPA
+            spk_payee = line['Beguenstigter/Zahlungspflichtiger']
+            comment = process_comment(line['Verwendungszweck'])
+            amount = process_amount(line['Betrag'])
+            date = process_date(line['Valutadatum'])
+            payee = self.find_payee(spk_payee, comment)
+            category = ""
+            memo = "%s: %s" % (spk_payee, comment) if spk_payee else comment
+        else:
+            logger.error("Unrecognized CSV format")
+            sys.exit(1)
         ynab = {
             'Date': date,
             'Payee': payee,
