@@ -13,3 +13,15 @@ Installation
 * Clone repository
 * `pip install requests yaml`
 * create config files if necessary
+
+
+Running
+-------
+
+* Sparkasse
+    1. Download a csv transaction dump from online-banking
+    2. Run ./sparkasse.py
+
+* Number 26
+    1. Create and fill 'n26_config.yml'
+    2. Run ./number26.py
