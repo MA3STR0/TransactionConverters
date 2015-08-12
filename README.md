@@ -10,8 +10,8 @@ Installation
 ------------
 
 * You need Python 3 and pip
-* Clone repository
-* `pip install requests yaml`
+* Clone this repository
+* Install dependencies: `pip3 install -r requirements.txt`
 * create config files if necessary
 
 
