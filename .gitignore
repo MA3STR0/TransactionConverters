@@ -1,0 +1,6 @@
+n26_config.yml
+private_payees.yml
+__pycache__
+.ropeproject
+umsatz-*
+ynab_data_*
